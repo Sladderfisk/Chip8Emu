@@ -2,9 +2,9 @@ OBJS = main.c
 
 CC = gcc
 
-INCLUDE_PATHS = -I"C:\mingw-x86_64\include\SDL2"
+INCLUDE_PATHS = -I"Dependencies/include"
 
-LIB_PATH = -L"C:\mingw-x86_64\lib\SDL2"
+LIB_PATH = -L"Dependencies\lib"
 
 FLAGS = -Wl,-subsystem,windows
 
