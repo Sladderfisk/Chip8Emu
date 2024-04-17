@@ -52,13 +52,16 @@ unsigned int VBO, VAO, EBO;
 
 void RegenImage(float time){
     for (int x = 0; x < 400; x++){
-        int y = sin((float)(x / 50)) * 100;
+        float V = x / 50.0f;
+        int y = sin(V) * 100 + 200;
         pixel pix = {255, 255, 255};
-        SetTexPixel(&tex, pix, x, y + 202);
-        SetTexPixel(&tex, pix, x, y + 201);
-        SetTexPixel(&tex, pix, x, y + 200);
-        SetTexPixel(&tex, pix, x, y + 199);
-        SetTexPixel(&tex, pix, x, y + 198);
+        SetTexPixel(&tex, pix, x, y);
+        SetTexPixel(&tex, pix, x + 1, y + 1);
+        SetTexPixel(&tex, pix, x, y + 1);
+        SetTexPixel(&tex, pix, x + 1, y);
+        SetTexPixel(&tex, pix, x - 1, y);
+        SetTexPixel(&tex, pix, x - 1, y - 1);
+        SetTexPixel(&tex, pix, x, y - 1);
     }
 
     ReBindTex(&tex, &sh);
@@ -70,7 +73,6 @@ void GenTexture(){
 
     for(int y = 0; y < 400; y++){
         for (int x = 0; x < 400; x++){
-            //byte green = glm_lerp(0, 255, 400 / x);
             image[(y * 400) + x][0] = (byte)glm_lerp(0.0f, 255.0f, y / 400.0f);
             image[(y * 400) + x][1] = (byte)glm_lerp(0.0f, 255.0f, x / 400.0f);
             image[(y * 400) + x][2] = (byte)glm_lerp(0.0f, 255.0f, (400 - x) / 400.0f);
@@ -78,7 +80,6 @@ void GenTexture(){
     }
 
     CreateTexture(&tex, 400, 400, image);
-    //SetTexture(&tex, image);
     ReBindTex(&tex, &sh);
 }
 
@@ -184,8 +185,11 @@ void HandleEvents(SDL_Event* e){
                     switch(e->button.which){
                         case 0:
                         {
-                            int mX = e->button.x;
-                            int mY = e->button.y;
+                            int mX;
+                            int mY;
+                            SDL_GetMouseState(&mX, &mY);
+                            mY = SCREEN_HEIGHT - mY;
+
                             int halfX = SCREEN_WIDTH / 2 + pos[0];
                             int halfY = SCREEN_HEIGHT / 2 + pos[1];
 

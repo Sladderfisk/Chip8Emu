@@ -10,8 +10,10 @@ void GetFileToStr(FILE *f, char **stor){
     fseek(f, 0, SEEK_END);
     fileSize = ftell(f);
     rewind(f);
-    *stor = malloc(fileSize);
-    fread(*stor, sizeof(char), fileSize, f);
+    *stor = malloc(fileSize + 1);
+    size_t bytes = fread(*stor, sizeof(char), fileSize, f);
+    char nullTerm = '\0';
+    memcpy(*stor + bytes, &nullTerm, 1);
 }
 
 void checkCompileErrors(unsigned int shader, const char* type)

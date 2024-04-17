@@ -1,6 +1,7 @@
 #include "headers/texture.h"
 
 #include <GL/glew.h>
+#include <cglm/cglm.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,8 @@ void CreateTexture(texture *tex, unsigned int x, unsigned int y, pixel image[]){
 
 void SetTexPixel(texture *tex, pixel pix, unsigned int x, unsigned int y){
     //memcpy(tex->texture, pix, (y * tex->y) + x);
+    x = glm_clamp(x, 0, tex->x);
+    y = glm_clamp(y, 0, tex->y);
     memcpy(tex->texture + (y * tex->y) + x, pix, 3);
 
 }
