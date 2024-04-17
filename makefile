@@ -1,4 +1,4 @@
-OBJS = main.c
+OBJS = main.c shader.c texture.c
 
 CC = gcc
 
@@ -8,7 +8,7 @@ LIB_PATH = -L"Dependencies\lib"
 
 FLAGS = -Wl,-subsystem,windows
 
-LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
+LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lGLEW32 -lcomdlg32
 
 TARGET = main
 
