@@ -1,4 +1,4 @@
-OBJS = main.c shader.c texture.c
+OBJS = main.c shader.c texture.c fileReader.c frame.c
 
 CC = gcc
 

@@ -9,15 +9,12 @@ typedef struct {
     unsigned int x;
     unsigned int y;
     unsigned int ID;
-    void *texture;
+    pixel *texture;
 } texture;
 
 void CreateTexture(texture *tex, unsigned int x, unsigned int y, pixel image[]);
-
-void SetImage(texture *tex, pixel image[]);
-
+void SetImage(texture *tex, pixel *image);
 void SetTexPixel(texture *tex, pixel pixel, unsigned int x, unsigned int y);
-
 void ReBindTex(texture *tex, shader *s);
-
 void DrawTex(texture *tex);
+void DeleteTex(texture *tex);

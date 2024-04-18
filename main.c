@@ -8,7 +8,6 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_syswm.h>
 
 #include <stdio.h>
 #include <math.h>
@@ -26,7 +25,9 @@
 #include <nuklear_sdl_gl3.h>
 
 #include "headers/texture.h"
+#include "headers/fileReader.h"
 #include "headers/shader.h"
+#include "headers/frame.h"
 
 #define MAX_VERTEX_MEMORY 512 * 1024
 #define MAX_ELEMENT_MEMORY 128 * 1024
@@ -35,140 +36,14 @@
 const float SCREEN_WIDTH = 1200.0f;
 const float SCREEN_HEIGHT = 800.0f;
 
-BOOL grabbing = FALSE;
+SDL_Window* window = NULL;
+int win_width, win_height;
+
 vec2 oldMouse;
-vec2 pos;
 
 BOOL quit = FALSE;
 
 SDL_Surface* screenSurface = NULL;
-
-SDL_Surface* image1;
-SDL_Surface* image2;
-
-texture tex = {0};
-shader sh = {0};
-unsigned int VBO, VAO, EBO;
-
-void RegenImage(float time){
-    for (int x = 0; x < 400; x++){
-        float V = x / 50.0f;
-        int y = sin(V) * 100 + 200;
-        pixel pix = {255, 255, 255};
-        SetTexPixel(&tex, pix, x, y);
-        SetTexPixel(&tex, pix, x + 1, y + 1);
-        SetTexPixel(&tex, pix, x, y + 1);
-        SetTexPixel(&tex, pix, x + 1, y);
-        SetTexPixel(&tex, pix, x - 1, y);
-        SetTexPixel(&tex, pix, x - 1, y - 1);
-        SetTexPixel(&tex, pix, x, y - 1);
-    }
-
-    ReBindTex(&tex, &sh);
-}
-
-void GenTexture(){
-    
-    pixel image[400*400];
-
-    for(int y = 0; y < 400; y++){
-        for (int x = 0; x < 400; x++){
-            image[(y * 400) + x][0] = (byte)glm_lerp(0.0f, 255.0f, y / 400.0f);
-            image[(y * 400) + x][1] = (byte)glm_lerp(0.0f, 255.0f, x / 400.0f);
-            image[(y * 400) + x][2] = (byte)glm_lerp(0.0f, 255.0f, (400 - x) / 400.0f);
-        }
-    }
-
-    CreateTexture(&tex, 400, 400, image);
-    ReBindTex(&tex, &sh);
-}
-
-void InitShaderStuff(){
-    CompileShader(&sh, "shaders/sh.vert", "shaders/sh.frag");
-    float vertices[] = {
-        -200.0f, 200.0f, 0.0f,  0.0f, 1.0f,
-        200.0f, 200.0f, 0.0f,   1.0f, 1.0f,
-        -200.0f, -200.0f, 0.0f, 0.0f, 0.0f,
-        200.0f, -200.0f, 0.0f, 1.0f, 0.0f
-    };
-    unsigned int indices[] = {
-        0, 1, 2,
-        1, 3, 2
-    };
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-}
-
-void Draw(){
-
-    RegenImage(0);
-    DrawTex(&tex);
-
-    glUseProgram(sh.ID);
-    mat4 proj = {0};
-    glm_ortho(-SCREEN_WIDTH / 2, SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 2, -1000.0f, 1000.0f, proj); 
-
-    mat4 view = {0};
-    vec3 eye = {0}; eye[0] = 0.0f; eye[1] = 0.0f; eye[2] = 1.0f;
-    vec3 center = {0}; center[0] = 0.0f; center[1] = 0.0f; center[2] = 0.0f;
-    vec3 up = {0}; up[0] = 0.0f; up[1] = 1.0f; up[2] = 0.0f;
-    glm_lookat(eye, center, up, view);
-    
-    mat4 tra = {0};
-    glm_mat4_identity(tra);
-    float newPos[] = {pos[0], pos[1], 0.0f};
-    glm_translate(tra, newPos);
-
-    glm_mat4_identity(view);
-
-    glUniformMatrix4fv(glGetUniformLocation(sh.ID, "model"), 1, GL_FALSE, &tra[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(sh.ID, "view"), 1, GL_FALSE, &view[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(sh.ID, "projection"), 1, GL_FALSE, &proj[0][0]);
-
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-
-char* OpenExplorer(SDL_Window* win, char* pathBuffer){
-    OPENFILENAME ofn;
-
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(win, &wmInfo);
-    HWND hwnd = wmInfo.info.win.window;
-
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFile = pathBuffer;
-    ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(pathBuffer);
-    ofn.lpstrFilter = "ROM Files (*.)\0*.\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    if (GetOpenFileName(&ofn)==FALSE) printf("File explorer dialogue could not open for some reason!\n");
-    return pathBuffer;
-}
 
 void HandleEvents(SDL_Event* e){
     switch(e->type){
@@ -185,43 +60,22 @@ void HandleEvents(SDL_Event* e){
                     switch(e->button.which){
                         case 0:
                         {
-                            int mX;
-                            int mY;
-                            SDL_GetMouseState(&mX, &mY);
-                            mY = SCREEN_HEIGHT - mY;
-
-                            int halfX = SCREEN_WIDTH / 2 + pos[0];
-                            int halfY = SCREEN_HEIGHT / 2 + pos[1];
-
-                            if (halfX - 200 < mX && halfX + 200 > mX && halfY - 200 < mY && halfY + 200 > mY) grabbing = TRUE;
-                            else grabbing = FALSE;
+                            TryToGrab(window);
                         }
                         break;
                     }
                 break;
 
                 case SDL_MOUSEBUTTONUP:
-                grabbing = FALSE;
+                Release();
                 break;
             }
-}
-
-BOOL LoadMedia(SDL_Surface** container, const char * path){
-    *container = SDL_LoadBMP(path);
-    if (*container == NULL){
-        printf( "Unable to load image %s! SDL Error: %s\n", path, SDL_GetError() );
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 int main( int argc, char* args[] )
 {
     //The window we'll be rendering to
-    SDL_Window* window = NULL;
     SDL_GLContext glContext;
-    int win_width, win_height;
     
     struct nk_context *ctx;
     struct nk_colorf bg;
@@ -274,13 +128,7 @@ int main( int argc, char* args[] )
     //Get window surface
     screenSurface = SDL_GetWindowSurface( window );
 
-    
-    LoadMedia(&image1, "Assets/eliasmog.bmp");
-    LoadMedia(&image2, "Assets/hihi.bmp");
-
-
-    InitShaderStuff();
-    GenTexture();
+    CreateFrame(640, 320);
 
     //Fill the surface white
     
@@ -303,8 +151,8 @@ int main( int argc, char* args[] )
         nk_input_end(ctx);
 
         if (grabbing) {
-            pos[0] += currentMouse[0] - oldMouse[0];
-            pos[1] -= currentMouse[1] - oldMouse[1];
+            framePos[0] += currentMouse[0] - oldMouse[0];
+            framePos[1] -= currentMouse[1] - oldMouse[1];
         }
         /* GUI */
         if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 250),
@@ -355,9 +203,9 @@ int main( int argc, char* args[] )
          * defaults everything back into a default state.
          * Make sure to either a.) save and restore or b.) reset your own state after
          * rendering the UI. */
+        DrawFrame(window);
         nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_MEMORY, MAX_ELEMENT_MEMORY);
 
-        Draw();
 
         SDL_GL_SwapWindow(window);
 
@@ -367,8 +215,6 @@ int main( int argc, char* args[] )
     
       //Destroy window
     SDL_DestroyWindow( window );
-    SDL_FreeSurface(image1);
-    SDL_FreeSurface(image2);
 
     //Quit SDL subsystems
     SDL_Quit();

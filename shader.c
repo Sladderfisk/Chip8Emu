@@ -5,16 +5,7 @@
 #include <stdio.h>
 #include <GL/glew.h>
 
-void GetFileToStr(FILE *f, char **stor){
-    unsigned long fileSize;
-    fseek(f, 0, SEEK_END);
-    fileSize = ftell(f);
-    rewind(f);
-    *stor = malloc(fileSize + 1);
-    size_t bytes = fread(*stor, sizeof(char), fileSize, f);
-    char nullTerm = '\0';
-    memcpy(*stor + bytes, &nullTerm, 1);
-}
+#include "headers/fileReader.h"
 
 void checkCompileErrors(unsigned int shader, const char* type)
 {
