@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "texture.h": "c",
+        "chip8.h": "c",
+        "stdint.h": "c"
+    }
+}

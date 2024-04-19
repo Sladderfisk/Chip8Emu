@@ -12,7 +12,9 @@ extern int height;
 
 void CreateFrame(int x, int y);
 void DrawFrame(SDL_Window *win);
-void Clear();
+void ClearFrame();
 void TryToGrab(SDL_Window *win);
 void Release();
 void DeleteFrame();
+void SetFramePixel(int x, int y);
+void ReBindFrame();

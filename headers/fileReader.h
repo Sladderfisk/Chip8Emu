@@ -8,4 +8,4 @@
 #include <stdio.h>
 
 FILE* OpenExplorer(SDL_Window* win, const char * flag);
-void GetFileToStr(FILE *f, char **stor);
+void GetFileToStr(FILE *f, char **stor, int *size);

@@ -7,3 +7,4 @@ typedef struct {
 } shader;
 
 void CompileShader(shader* sh, const char* vertPath, const char* fragPath);
+void DeleteShader(shader* sh);

@@ -21,14 +21,15 @@ FILE* OpenExplorer(SDL_Window* win, const char * flag){
     ofn.nMaxFileTitle = 0;
     ofn.lpstrInitialDir = NULL;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
+    GetOpenFileName(&ofn);
     return fopen(filePath, flag);
 }
 
-void GetFileToStr(FILE *f, char **stor){
+void GetFileToStr(FILE *f, char **stor, int *size){
     unsigned long fileSize;
     fseek(f, 0, SEEK_END);
     fileSize = ftell(f);
+    if (size != NULL) *size = fileSize;
     rewind(f);
     *stor = (char *)malloc(fileSize + 1);
     size_t bytes = fread(*stor, sizeof(char), fileSize, f);

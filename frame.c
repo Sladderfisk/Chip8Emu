@@ -35,6 +35,7 @@ void CreateFrame(int x, int y){
     height = y;
     CreateTexture(&tex, x, y, NULL);
     CreateBlankImage();
+    ClearFrame();
 
     CompileShader(&sh, "shaders/sh.vert", "shaders/sh.frag");
     float halfX = x /2;
@@ -71,7 +72,6 @@ void CreateFrame(int x, int y){
 
 void DrawFrame(SDL_Window *win){
     
-    Clear();
     DrawTex(&tex);
 
     glUseProgram(sh.ID);
@@ -102,7 +102,7 @@ void DrawFrame(SDL_Window *win){
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void Clear(){
+void ClearFrame(){
     SetImage(&tex, clearImage);
     ReBindTex(&tex, &sh);
 }
@@ -126,4 +126,24 @@ void TryToGrab(SDL_Window *win){
 
 void Release(){
     grabbing = false;
+}
+
+void DeleteFrame(){
+    DeleteTex(&tex);
+    DeleteShader(&sh);
+    free(clearImage);
+}
+
+void SetFramePixel(int xPos, int yPos){
+    xPos -= 1; yPos -= 1;
+    int size = width / 64;
+    for (int y = 0; y < size; y++){
+        for (int x = 0; x < size; x++){
+            SetTexPixel(&tex, (byte*)&white[0], xPos * size + x, yPos * size + y);
+        }
+    }
+}
+
+void ReBindFrame(){
+    ReBindTex(&tex, &sh);
 }

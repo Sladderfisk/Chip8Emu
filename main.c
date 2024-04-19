@@ -28,6 +28,7 @@
 #include "headers/fileReader.h"
 #include "headers/shader.h"
 #include "headers/frame.h"
+#include "headers/chip8.h"
 
 #define MAX_VERTEX_MEMORY 512 * 1024
 #define MAX_ELEMENT_MEMORY 128 * 1024
@@ -133,7 +134,7 @@ int main( int argc, char* args[] )
     //Fill the surface white
     
     //Update the surface
-    
+    //InitChip8(window);
 
     //Hack to get window to stay up
     SDL_Event e; 
@@ -166,8 +167,7 @@ int main( int argc, char* args[] )
 
             nk_layout_row_static(ctx, 30, 80, 1);
             if (nk_button_label(ctx, "Open Rom")){
-                char path[MAX_PATH];
-                OpenExplorer(window, path);
+                InitChip8(window);
             }
             nk_layout_row_dynamic(ctx, 30, 2);
             if (nk_option_label(ctx, "easy", op == EASY)) op = EASY;
@@ -203,6 +203,7 @@ int main( int argc, char* args[] )
          * defaults everything back into a default state.
          * Make sure to either a.) save and restore or b.) reset your own state after
          * rendering the UI. */
+        if (emu.active) Fetch();
         DrawFrame(window);
         nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_MEMORY, MAX_ELEMENT_MEMORY);
 

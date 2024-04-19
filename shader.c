@@ -46,8 +46,8 @@ void CompileShader(shader *sh, const char *vertPath, const char *fragPath)
     }
 
     char *vertCode, *fragCode;
-    GetFileToStr(vertFile, &vertCode);
-    GetFileToStr(fragFile, &fragCode);
+    GetFileToStr(vertFile, &vertCode, NULL);
+    GetFileToStr(fragFile, &fragCode, NULL);
     sh->vertSrc = vertCode;
     sh->fragSrc = fragCode;
 
@@ -73,4 +73,8 @@ void CompileShader(shader *sh, const char *vertPath, const char *fragPath)
     //free(fragCode);
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+}
+
+void DeleteShader(shader* sh){
+
 }
