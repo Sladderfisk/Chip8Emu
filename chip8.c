@@ -32,23 +32,14 @@ const byte font[] = {
 };
 
 void SetFrame(){
-    int currentBit = 0;
-    byte currentByte = 0;
-    for (int i = 0; i < sizeof(emu.display); i++){
-        currentByte = emu.display[i];
-        currentBit = 0;
-        while(currentBit < 8){
-            if (currentByte & 0x01) {
-                int x = i % 64;
-                int y = i / 64;
-                printf("x %d, y %d\n", x, y);
+    for (int y = 0; y < 32; y++){
+        for (int x = 0; x < 64; x++){
+            byte pixel = emu.display[y * 64 + x];
+            if (pixel & 0xFF){
                 SetFramePixel(x, y);
             }
-            currentByte >>= 1;
-            currentBit++;
         }
     }
-
     ReBindFrame();
 }
 
@@ -84,7 +75,6 @@ void Fetch(){
 }
 
 void Decode(uint16_t opcode){
-    printf("Instruction: %d\n", (opcode & 0xF000) >> 12);
     switch((opcode & 0xF000) >> 12){
         case 0x00: {
             opcode &= 0x0FFF;
@@ -147,6 +137,11 @@ void Decode(uint16_t opcode){
         }
         break;
 
+        case 0x08: {
+            
+        }
+        break;
+
         case 0x09: {
             byte Vx = emu.variableRegister[(opcode & 0x0F00) >> 8];
             byte Vy = emu.variableRegister[(opcode & 0x00F0) >> 4];
@@ -155,7 +150,6 @@ void Decode(uint16_t opcode){
         break;
 
         case 0x0A: {
-            printf("Sets stack pointer to: %#4x\n", opcode);
             uint16_t nnn = opcode & 0x0FFFu;
             emu.stackPointer = nnn;
             printf("Sets stack pointer to: %#3x\n", nnn);
@@ -163,15 +157,26 @@ void Decode(uint16_t opcode){
         break;
 
         case 0x0D: {
-            byte x = (opcode & 0x0F00) >> 8;
-            byte y = (opcode & 0x00F0) >> 4;
+            byte Vx = (opcode & 0x0F00) >> 8;
+            byte Vy = (opcode & 0x00F0) >> 4;
             byte n = opcode & 0x000F;
 
-            printf("%d, %d, %d\n", x, y, n);
-            byte *sprite = malloc(n);
-            memcpy(sprite, &emu.memory[emu.stackPointer], n);
-            for (int i = 0; i < n; i++){
-                emu.display[y * 32 + x + i] = sprite[i];
+            byte x = emu.variableRegister[Vx] % 64;
+            byte y = emu.variableRegister[Vy] % 32;
+
+            emu.variableRegister[0x0F] = 0;
+
+            for (int row = 0; row < n; row++){
+                byte currentByte = emu.memory[emu.stackPointer + row];
+
+                for (int col = 0; col < 8; col++){
+                    byte *pixel = &emu.display[(row + y) * 64 + (col + x)];
+                    if (currentByte & (0x80 >> col)){
+                    *pixel ^= 0xFF;
+
+                        if (*pixel & 0xFF) emu.variableRegister[0x0F] = 1;
+                    } 
+                }
             }
 
             SetFrame();

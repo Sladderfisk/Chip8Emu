@@ -18,7 +18,7 @@ typedef struct{
     byte delayTimer;
     byte soundTimer;
     byte variableRegister[16];
-    byte display[64 * 32 / 8]; // Devides to make it 64 * 32 bits   1: on  0: off
+    byte display[64 * 32];
 } chip8;
 
 extern chip8 emu;

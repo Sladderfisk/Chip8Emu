@@ -135,13 +135,18 @@ void DeleteFrame(){
 }
 
 void SetFramePixel(int xPos, int yPos){
-    xPos -= 1; yPos -= 1;
+    yPos = 31 - yPos;
     int size = width / 64;
     for (int y = 0; y < size; y++){
         for (int x = 0; x < size; x++){
             SetTexPixel(&tex, (byte*)&white[0], xPos * size + x, yPos * size + y);
         }
     }
+    // for (int y = 0; y < 32; y++){
+    //     for (int x = 0; x < 64; x++){
+    //         SetTexPixel(&tex, (byte*)&white[0], xPos * size, yPos * size);
+    //     }
+    // }
 }
 
 void ReBindFrame(){
