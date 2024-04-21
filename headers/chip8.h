@@ -13,8 +13,9 @@ typedef struct{
     bool active;
     int PC;
     byte memory[4096]; // Memory is 4kB
-    uint16_t stackPointer;
-    byte stack[16];
+    int stack[16];
+    uint16_t I;
+    byte stackPointer;
     byte delayTimer;
     byte soundTimer;
     byte variableRegister[16];

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <SDL2/SDL.h>
 
@@ -30,6 +31,26 @@ const byte font[] = {
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+
+uint16_t Getnnn(uint16_t opcode){
+    return opcode & 0x0FFF;
+}
+
+byte Getn(uint16_t opcode){
+    return opcode & 0x000F;
+}
+
+byte *GetVx(uint16_t opcode){
+    return &emu.variableRegister[(opcode & 0x0F00) >> 8];
+}
+
+byte *GetVy(uint16_t opcode){
+    return &emu.variableRegister[(opcode & 0x00F0) >> 4];
+}
+
+byte Getkk(uint16_t opcode){
+    return opcode & 0x00FF;
+}
 
 void SetFrame(){
     for (int y = 0; y < 32; y++){
@@ -60,7 +81,6 @@ void InitChip8(SDL_Window *win){
     free(file);
 
     emu.active = true;
-    //Fetch();
 }
 
 void Fetch(){
@@ -69,105 +89,176 @@ void Fetch(){
     // We need to append PC by 2 bytes to for next op code fetch.
     emu.PC += 2;
     Decode(opcode);
-    // printf("%d\n", (0xA050 & 0xF000) >> 12);
-    // Decode(0xA050);
-    // Decode(0xD375);
 }
 
 void Decode(uint16_t opcode){
+    printf("%#2x\n", (opcode & 0xF000) >> 12);
     switch((opcode & 0xF000) >> 12){
         case 0x00: {
-            opcode &= 0x0FFF;
+            printf("opcode: %#4x\n", opcode);
             switch(opcode){
-                case 0xE0: // CLS:      Clear screen.
+                case 0x00E0: // CLS:      Clear screen.
                 ClearFrame();
                 break;
 
-                case 0xEE: // RET:      Return from subroutine.
-                emu.PC = emu.stack[emu.stackPointer];
+                case 0x00EE: // RET:      Return from subroutine.
+                printf("Return from subroutine %d\n", emu.stackPointer);
                 emu.stackPointer--;
+                emu.PC = emu.stack[emu.stackPointer];
                 break;
             }
         }
         break;
 
         case 0x01: { // JP addr:        Sets PC to addr.
-            emu.PC = opcode & 0x0FFF;
+            emu.PC = Getnnn(opcode);
         }
         break;
 
         case 0x02: { // CALL addr:      Call subroutine at addr.
-            emu.stackPointer++;
+            printf("PC : %#8x\n", emu.PC);
             emu.stack[emu.stackPointer] = emu.PC;
+            ++emu.stackPointer;
+            emu.PC = Getnnn(opcode);
         }
         break;
 
         case 0x03: { // SE Vx, byte:    Skip next instruction if Vx = kk.
-            byte Vx = emu.variableRegister[(opcode & 0x0F00) >> 8];
-            byte kk = opcode & 0x00FF;
-            if (Vx == kk) emu.PC += 2;
+            byte *Vx = GetVx(opcode);
+            byte kk = Getkk(opcode);
+            if (*Vx == kk) emu.PC += 2;
         }
         break;
 
         case 0x04: { // SNE Vx, byte:    Skip next instruction if Vx != kk.
-            byte Vx = emu.variableRegister[(opcode & 0x0F00) >> 8];
-            byte kk = opcode & 0x00FF;
-            if (Vx != kk) emu.PC += 2;
+            byte *Vx = GetVx(opcode);
+            byte kk = Getkk(opcode);
+            if (*Vx != kk) emu.PC += 2;
         }
         break;
 
         case 0x05: {
-            byte Vx = emu.variableRegister[(opcode & 0x0F00) >> 8];
-            byte Vy = emu.variableRegister[(opcode & 0x00F0) >> 4];
-            if (Vx == Vy) emu.PC += 2;
+            byte *Vx = GetVx(opcode);
+            byte *Vy = GetVy(opcode);
+            if (*Vx == *Vy) emu.PC += 2;
         }
         break;
 
         case 0x06: {
-            byte Vx = (opcode & 0x0F00) >> 8;
-            byte kk = opcode & 0x00FF;
-            emu.variableRegister[Vx] = kk;
+            byte *Vx = GetVx(opcode);
+            byte kk = Getkk(opcode);
+            *Vx = kk;
         }
         break;
 
         case 0x07: {
-            byte Vx = (opcode & 0x0F00) >> 8;
-            byte kk = opcode & 0x00FF;
-            emu.variableRegister[Vx] += kk;
+            byte *Vx = GetVx(opcode);
+            byte kk = Getkk(opcode);
+            *Vx += kk;
         }
         break;
 
         case 0x08: {
+            byte *Vx = GetVx(opcode);
+            byte *Vy = GetVy(opcode);
             
+            switch(opcode & 0xF){
+                case 0x0: {
+                    *Vx = *Vy;
+                }
+                break;
+
+                case 0x1: {
+                    *Vx |= *Vy;
+                }
+                break;
+
+                case 0x2: {
+                    *Vx &= *Vy;
+                }
+                break;
+
+                case 0x3: {
+                    *Vx ^= *Vy;
+                }
+                break;
+
+                case 0x4: {
+                    int16_t val = (*Vx + *Vy);
+                    *Vx = val & 0xFF;
+                    emu.variableRegister[0xF] = val > 255;
+                }
+                break;
+
+                case 0x5: {
+                    int16_t val = *Vx - *Vy;
+                    *Vx = val;
+                    emu.variableRegister[0xF] = val >= 0;
+                }
+                break;
+
+                case 0x6: {
+                    emu.variableRegister[0xF] = *Vx & 0x0001;
+                    *Vx /= 2;
+                }
+                break;
+
+                case 0x7: {
+                    int16_t val = *Vy - *Vx;
+                    *Vx = val;
+                    emu.variableRegister[0xF] = val >= 0;
+                }
+                break;
+
+                case 0xE: {
+                    emu.variableRegister[0xF] = *Vx & 0x8000;
+                    *Vx *= 2;
+                }
+                break;
+            }
         }
         break;
 
         case 0x09: {
-            byte Vx = emu.variableRegister[(opcode & 0x0F00) >> 8];
-            byte Vy = emu.variableRegister[(opcode & 0x00F0) >> 4];
-            if (Vx != Vy) emu.PC++;
+            byte *Vx = GetVx(opcode);
+            byte *Vy = GetVy(opcode);
+            if (*Vx != *Vy) emu.PC += 2;
         }
         break;
 
         case 0x0A: {
-            uint16_t nnn = opcode & 0x0FFFu;
-            emu.stackPointer = nnn;
-            printf("Sets stack pointer to: %#3x\n", nnn);
+            uint16_t nnn = Getnnn(opcode);
+            emu.I = nnn;
+        }
+        break;
+
+        case 0x0B: {
+            uint16_t nnn = Getnnn(opcode);
+            byte V0 = emu.variableRegister[0];
+            emu.PC = nnn + V0;
+        }
+        break;
+
+        case 0x0C: {
+            byte *Vx = GetVx(opcode);
+            byte kk = Getkk(opcode);
+            srand(time(NULL));
+            *Vx = (rand() % 255 + 0) & kk;
         }
         break;
 
         case 0x0D: {
-            byte Vx = (opcode & 0x0F00) >> 8;
-            byte Vy = (opcode & 0x00F0) >> 4;
-            byte n = opcode & 0x000F;
+            byte *Vx = GetVx(opcode);
+            byte *Vy = GetVy(opcode);
+            byte n = Getn(opcode);
 
-            byte x = emu.variableRegister[Vx] % 64;
-            byte y = emu.variableRegister[Vy] % 32;
+            byte x = *Vx % 64;
+            byte y = *Vy % 32;
 
             emu.variableRegister[0x0F] = 0;
 
             for (int row = 0; row < n; row++){
-                byte currentByte = emu.memory[emu.stackPointer + row];
+                byte currentByte = emu.memory[emu.I + row];
 
                 for (int col = 0; col < 8; col++){
                     byte *pixel = &emu.display[(row + y) * 64 + (col + x)];
@@ -182,6 +273,81 @@ void Decode(uint16_t opcode){
             SetFrame();
         }
         break;
+
+        case 0x0E: {
+            switch(opcode & 0x00FF) {
+
+            }
+        }
+        break;
+
+        case 0x0F: {
+            byte *Vx = GetVx(opcode);
+
+            switch(opcode & 0x00FF) {
+                case 0x07: {
+                    *Vx = emu.delayTimer;
+                }
+                break;
+
+                case 0x0A: {
+                    printf("Should wait for input\n");
+                    // Wait for key press!!
+                }
+                break;
+
+                case 0x15: {
+                    emu.delayTimer = *Vx;
+                }
+                break;
+
+                case 0x18: {
+                    emu.soundTimer = *Vx;
+                }
+                break;
+
+                case 0x1E: {
+                    emu.variableRegister[0x0F] = (*Vx + emu.I) > 0x1000;
+                    emu.I += *Vx;
+                }
+                break;
+
+                case 0x29: {
+                    emu.I = 0x50 + *Vx * 5;
+                }
+                break;
+
+                case 0x33: {
+                    uint8_t val = *Vx;
+                    emu.memory[emu.I + 2] = val % 10;
+
+                    val /= 10;
+                    emu.memory[emu.I + 1] = val % 10;
+
+                    val /= 10;
+                    emu.memory[emu.I] = val % 10;
+                }
+                break;
+
+                case 0x55: {
+                    byte x = (opcode & 0x0F00) >> 8; 
+                    for (int i = 0; i <= x; i++){
+                        emu.memory[emu.I + i] = emu.variableRegister[i];
+                    }
+                }
+                break;
+
+                case 0x65: {
+                    byte x = (opcode & 0x0F00) >> 8; 
+                    for (int i = 0; i <= x; i++){
+                        emu.variableRegister[i] = emu.memory[emu.I + i];
+                    }
+                }
+                break;
+            }
+        }
+        break;
+
         default:
         printf("%d not implimented\n", (opcode & 0xF000) >> 12);
         break;
