@@ -19,7 +19,7 @@ int height = 0;
 
 texture tex = {0};
 shader sh = {0};
-unsigned int VBO, VAO, EBO;
+unsigned int VBO = 0, VAO = 0, EBO = 0;
 
 
 void CreateBlankImage(){
@@ -129,6 +129,10 @@ void Release(){
 }
 
 void DeleteFrame(){
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    
     DeleteTex(&tex);
     DeleteShader(&sh);
     free(clearImage);

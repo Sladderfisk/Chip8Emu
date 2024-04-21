@@ -7,6 +7,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "headers/input.h"
 #include "headers/fileReader.h"
 #include "headers/texture.h"
 #include "headers/frame.h"
@@ -62,6 +63,79 @@ void SetFrame(){
         }
     }
     ReBindFrame();
+}
+
+byte Chip8KeyDown(byte key){
+    printf("Inpuzzy\n");
+    switch(key){
+        case 0x0:
+            return GetKeyDown(SDLK_x) | (key << 4);
+        break;
+
+        case 0x1:
+            return GetKeyDown(SDLK_1) | (key << 4);
+        break;
+
+        case 0x2:
+            return GetKeyDown(SDLK_2) | (key << 4);
+        break;
+
+        case 0x3:
+            return GetKeyDown(SDLK_3) | (key << 4);
+        break;
+
+        case 0x4:
+            return GetKeyDown(SDLK_q) | (key << 4);
+        break;
+
+        case 0x5:
+            return GetKeyDown(SDLK_w) | (key << 4);
+        break;
+
+        case 0x6:
+            return GetKeyDown(SDLK_e) | (key << 4);
+        break;
+
+        case 0x7:
+            return GetKeyDown(SDLK_a) | (key << 4);
+        break;
+
+        case 0x8:
+            return GetKeyDown(SDLK_s) | (key << 4);
+        break;
+
+        case 0x9:
+            return GetKeyDown(SDLK_d) | (key << 4);
+        break;
+
+        case 0xA:
+            return GetKeyDown(SDLK_z) | (key << 4);
+        break;
+
+        case 0xB:
+            return GetKeyDown(SDLK_c) | (key << 4);
+        break;
+        
+        case 0xC:
+            return GetKeyDown(SDLK_4) | (key << 4);
+        break;
+
+        case 0xD:
+            return GetKeyDown(SDLK_r) | (key << 4);
+        break;
+
+        case 0xE:
+            return GetKeyDown(SDLK_f) | (key << 4);
+        break;
+
+        case 0xF:
+            return GetKeyDown(SDLK_v) | (key << 4);
+        break;
+
+        default: 
+            return 0x0000;
+        break;
+    }
 }
 
 void InitChip8(SDL_Window *win){
@@ -279,8 +353,18 @@ void Decode(uint16_t opcode){
         break;
 
         case 0x0E: {
-            switch(opcode & 0x00FF) {
+            byte *Vx = GetVx(opcode);
 
+            switch(opcode & 0x00FF) {
+                case 0x9E: {
+                    if (Chip8KeyDown(*Vx) & 0x1) emu.PC += 2;
+                }
+                break;
+
+                case 0xA1: {
+                    if (!(Chip8KeyDown(*Vx) & 0x1)) emu.PC += 2;
+                }
+                break;
             }
         }
         break;
@@ -295,8 +379,15 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0x0A: {
-                    printf("Should wait for input\n");
-                    // Wait for key press!!
+                    printf("Waiting for input\n");
+                    byte val = 0;
+                    for (int i = 0; i < 0x10; i++){
+                        val = Chip8KeyDown(i);
+                        if (val & 0x1) break;
+                    }
+
+                    if (!(val & 0x1)) emu.PC -= 2;
+                    else *Vx = (val >> 4);
                 }
                 break;
 

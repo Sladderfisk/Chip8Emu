@@ -11,6 +11,7 @@
 
 typedef struct{
     bool active;
+    byte input[0xF];
     int PC;
     byte memory[4096]; // Memory is 4kB
     int stack[16];

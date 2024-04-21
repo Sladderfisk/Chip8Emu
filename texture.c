@@ -59,5 +59,6 @@ void DrawTex(texture *tex){
 }
 
 void DeleteTex(texture *tex){
+    glDeleteTextures(1, &tex->ID);
     free(tex->texture);
 }

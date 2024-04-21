@@ -24,6 +24,7 @@
 #include <nuklear.h>
 #include <nuklear_sdl_gl3.h>
 
+#include "headers/input.h"
 #include "headers/texture.h"
 #include "headers/fileReader.h"
 #include "headers/shader.h"
@@ -47,7 +48,7 @@ nk_bool quit = FALSE;
 
 SDL_Surface* screenSurface = NULL;
 
-void HandleEvents(SDL_Event* e){
+void GetEvents(SDL_Event* e){
     switch(e->type){
                 case SDL_QUIT:
                     quit = TRUE;
@@ -147,9 +148,13 @@ int main( int argc, char* args[] )
         int currentMouse[2];
         SDL_GetMouseState(&currentMouse[0], &currentMouse[1]);
         nk_input_begin(ctx);
+
+        int index = 0;
         while( SDL_PollEvent( &e ) != 0 ) {
-            HandleEvents(&e);
+            GetEvents(&e);
             nk_sdl_handle_event(&e);
+            SaveEvents(&e, index);
+            index++;
             }
 
         nk_sdl_handle_grab(); /* optional grabbing behavior */
@@ -201,7 +206,7 @@ int main( int argc, char* args[] )
         if (emu.active && !debugging) Fetch();
         DrawFrame(window);
         nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_MEMORY, MAX_ELEMENT_MEMORY);
-
+        EndInput();
 
         SDL_GL_SwapWindow(window);
 
@@ -211,7 +216,9 @@ int main( int argc, char* args[] )
     
       //Destroy window
     SDL_DestroyWindow( window );
-
+    DeleteFrame();
+    nk_font_atlas_clear(atlas);
+    nk_free(ctx);
     //Quit SDL subsystems
     SDL_Quit();
 
