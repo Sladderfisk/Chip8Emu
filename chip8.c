@@ -198,8 +198,10 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0x6: {
-                    emu.variableRegister[0xF] = *Vx & 0x0001;
-                    *Vx /= 2;
+                    int16_t val = *Vx >> 1;
+                    byte ogVx = *Vx;
+                    *Vx = val;
+                    emu.variableRegister[0xF] = ogVx & 0x01;
                 }
                 break;
 
@@ -211,8 +213,10 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0xE: {
-                    emu.variableRegister[0xF] = *Vx & 0x8000;
-                    *Vx *= 2;
+                    int16_t val = *Vx << 1;
+                    byte ogVx = *Vx;
+                    *Vx = val;
+                    emu.variableRegister[0xF] = (ogVx >> 7) & 0x01;
                 }
                 break;
             }
@@ -307,8 +311,9 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0x1E: {
-                    emu.variableRegister[0x0F] = (*Vx + emu.I) > 0x1000;
-                    emu.I += *Vx;
+                    int16_t val = emu.I + *Vx;
+                    emu.variableRegister[0x0F] = val > 0x1000;
+                    emu.I = val;
                 }
                 break;
 
