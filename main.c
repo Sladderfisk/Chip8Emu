@@ -62,6 +62,12 @@ void GetEvents(SDL_Event* e){
                     }
                 break;
 
+                case SDL_KEYUP:
+                    switch(e->key.keysym.sym){
+                        
+                    }
+                break;
+
                 case SDL_MOUSEBUTTONDOWN:
                     switch(e->button.which){
                         case 0:
