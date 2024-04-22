@@ -70,6 +70,7 @@ void CreateFrame(int x, int y){
     glEnableVertexAttribArray(1);
 
     ClearFrame();
+    ReBindFrame();
 }
 
 void DrawFrame(SDL_Window *win){
