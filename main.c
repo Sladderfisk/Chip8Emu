@@ -281,7 +281,8 @@ int main( int argc, char* args[] )
     SDL_Event e; 
     bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
     while( quit == FALSE ){ 
-        float deltaTime = SDL_GetTicks64() - lastTime;
+        uint64_t deltaTime = SDL_GetTicks64() - lastTime;
+        lastTime = SDL_GetTicks64();
         int currentMouse[2];
         SDL_GetMouseState(&currentMouse[0], &currentMouse[1]);
         nk_input_begin(ctx);
@@ -306,8 +307,8 @@ int main( int argc, char* args[] )
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
         {   
-            char time[6];
-            gcvt(deltaTime, 6, time);
+            char time[10];
+            gcvt(deltaTime, 10, time);
             nk_layout_row_dynamic(ctx, 30, 1);
             nk_label(ctx, time, NK_TEXT_LEFT);
             nk_layout_row_static(ctx, 30, 80, 1);
@@ -344,15 +345,19 @@ int main( int argc, char* args[] )
          * defaults everything back into a default state.
          * Make sure to either a.) save and restore or b.) reset your own state after
          * rendering the UI. */
-        int cyklesPerFrame = 200;
-        for (int c = 0; c < cyklesPerFrame; c++){
-            if (emu.active && !debugging) Fetch();
-            if (emu.active && !debugging) ReBindFrame();
-;
+        int cyclesPerFrame = deltaTime;
+        if (emu.active && !debugging){
+            for (int c = 0; c < cyclesPerFrame; c++){
+                Fetch();
+            }
+
+            SetFrame();
+            ReBindFrame();
         }
+            
         if (emu.active){
-            if(emu.soundTimer > 0) emu.soundTimer -= 60 * deltaTime;
-            if(emu.delayTimer > 0) emu.delayTimer -= 60 * deltaTime;
+            if(emu.soundTimer > 0) emu.soundTimer -= 60 * deltaTime * 0.001;
+            if(emu.delayTimer > 0) emu.delayTimer -= 60 * deltaTime * 0.001;
         }
 
         DrawFrame(window);
@@ -363,7 +368,6 @@ int main( int argc, char* args[] )
 
         oldMouse[0] = currentMouse[0];
         oldMouse[1] = currentMouse[1];
-        lastTime = SDL_GetTicks64();
     }    
     
       //Destroy window

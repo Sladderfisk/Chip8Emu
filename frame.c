@@ -68,6 +68,8 @@ void CreateFrame(int x, int y){
     // texture coord attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    ClearFrame();
 }
 
 void DrawFrame(SDL_Window *win){

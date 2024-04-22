@@ -11,6 +11,7 @@
 
 typedef struct{
     bool active;
+    byte spritesThisSec;
     byte input[0x10];
     int PC;
     byte memory[4096]; // Memory is 4kB
@@ -28,3 +29,4 @@ extern chip8 emu;
 void InitChip8(SDL_Window *win);
 void Fetch();
 void Decode(uint16_t opernad);
+void SetFrame();

@@ -53,16 +53,6 @@ byte Getkk(uint16_t opcode){
     return opcode & 0x00FF;
 }
 
-void SetFrame(){
-    for (int y = 0; y < 32; y++){
-        for (int x = 0; x < 64; x++){
-            byte pixel = emu.display[y * 64 + x];
-
-            SetFramePixel(x, y, pixel);
-        }
-    }
-}
-
 void InitChip8(SDL_Window *win){
     // Putting font in memory at location 0x50. Why? Idk people usually do that, but it's suposed to be somwhere around 0x000 to 0x1FF.
     memcpy(emu.memory + 0x50, font, sizeof(font));
@@ -167,16 +157,19 @@ void Decode(uint16_t opcode){
 
                 case 0x1: {
                     *Vx |= *Vy;
+                    emu.variableRegister[0xF] = 0;
                 }
                 break;
 
                 case 0x2: {
                     *Vx &= *Vy;
+                    emu.variableRegister[0xF] = 0;
                 }
                 break;
 
                 case 0x3: {
                     *Vx ^= *Vy;
+                    emu.variableRegister[0xF] = 0;
                 }
                 break;
 
@@ -195,7 +188,7 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0x6: {
-                    int16_t val = *Vx >> 1;
+                    int16_t val = *Vy >> 1;
                     byte ogVx = *Vx;
                     *Vx = val;
                     emu.variableRegister[0xF] = ogVx & 0x01;
@@ -210,7 +203,7 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0xE: {
-                    int16_t val = *Vx << 1;
+                    int16_t val = *Vy << 1;
                     byte ogVx = *Vx;
                     *Vx = val;
                     emu.variableRegister[0xF] = (ogVx >> 7) & 0x01;
@@ -262,6 +255,7 @@ void Decode(uint16_t opcode){
                 byte currentByte = emu.memory[emu.I + row];
 
                 for (int col = 0; col < 8; col++){
+                    if ((row + y) > 32 || (col + x) > 64) continue;
                     byte *pixel = &emu.display[(row + y) * 64 + (col + x)];
 
                     if (currentByte & (0x80 >> col)){
@@ -353,7 +347,8 @@ void Decode(uint16_t opcode){
                 case 0x55: {
                     byte x = (opcode & 0x0F00) >> 8; 
                     for (int i = 0; i <= x; i++){
-                        emu.memory[emu.I + i] = emu.variableRegister[i];
+                        emu.memory[emu.I] = emu.variableRegister[i];
+                        emu.I++;
                     }
                 }
                 break;
@@ -361,7 +356,8 @@ void Decode(uint16_t opcode){
                 case 0x65: {
                     byte x = (opcode & 0x0F00) >> 8; 
                     for (int i = 0; i <= x; i++){
-                        emu.variableRegister[i] = emu.memory[emu.I + i];
+                        emu.variableRegister[i] = emu.memory[emu.I];
+                        emu.I++;
                     }
                 }
                 break;
@@ -372,5 +368,15 @@ void Decode(uint16_t opcode){
         default:
         printf("%d not implimented\n", (opcode & 0xF000) >> 12);
         break;
+    }
+}
+
+void SetFrame(){
+    for (int y = 0; y < 32; y++){
+        for (int x = 0; x < 64; x++){
+            byte pixel = emu.display[y * 64 + x];
+
+            SetFramePixel(x, y, pixel);
+        }
     }
 }
