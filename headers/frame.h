@@ -16,5 +16,5 @@ void ClearFrame();
 void TryToGrab(SDL_Window *win);
 void Release();
 void DeleteFrame();
-void SetFramePixel(int x, int y);
+void SetFramePixel(int x, int y, bool on);
 void ReBindFrame();

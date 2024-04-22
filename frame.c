@@ -104,7 +104,7 @@ void DrawFrame(SDL_Window *win){
 
 void ClearFrame(){
     SetImage(&tex, clearImage);
-    ReBindTex(&tex, &sh);
+    //ReBindTex(&tex, &sh);
 }
 
 void TryToGrab(SDL_Window *win){
@@ -138,19 +138,14 @@ void DeleteFrame(){
     free(clearImage);
 }
 
-void SetFramePixel(int xPos, int yPos){
+void SetFramePixel(int xPos, int yPos, bool on){
     yPos = 31 - yPos;
     int size = width / 64;
     for (int y = 0; y < size; y++){
         for (int x = 0; x < size; x++){
-            SetTexPixel(&tex, (byte*)&white[0], xPos * size + x, yPos * size + y);
+            SetTexPixel(&tex, (byte*)(on ? white : black), xPos * size + x, yPos * size + y);
         }
     }
-    // for (int y = 0; y < 32; y++){
-    //     for (int x = 0; x < 64; x++){
-    //         SetTexPixel(&tex, (byte*)&white[0], xPos * size, yPos * size);
-    //     }
-    // }
 }
 
 void ReBindFrame(){

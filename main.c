@@ -56,15 +56,143 @@ void GetEvents(SDL_Event* e){
 
                 case SDL_KEYDOWN:
                     switch(e->key.keysym.sym){
+
+                        case SDLK_x:
+                            emu.input[0x0] = 1;
+                        break;
+
                         case SDLK_1:
-                        if(debugging & emu.active) Fetch();
+                            emu.input[0x1] = 1;
+                        break;
+
+                        case SDLK_2:
+                            emu.input[0x2] = 1;
+                        break;
+
+                        case SDLK_3:
+                            emu.input[0x3] = 1;
+                        break;
+
+                        case SDLK_q:
+                            emu.input[0x4] = 1;
+                        break;
+
+                        case SDLK_w:
+                            emu.input[0x5] = 1;
+                        break;
+
+                        case SDLK_e:
+                            emu.input[0x6] = 1;
+                        break;
+
+                        case SDLK_a:
+                            emu.input[0x7] = 1;
+                        break;
+
+                        case SDLK_s:
+                            emu.input[0x8] = 1;
+                        break;
+
+                        case SDLK_d:
+                            emu.input[0x9] = 1;
+                        break;
+
+                        case SDLK_z:
+                            emu.input[0xA] = 1;
+                        break;
+
+                        case SDLK_c:
+                            emu.input[0xB] = 1;
+                        break;
+
+                        case SDLK_4:
+                            emu.input[0xC] = 1;
+                        break;
+
+                        case SDLK_r:
+                            emu.input[0xD] = 1;
+                        break;
+
+                        case SDLK_f:
+                            emu.input[0xE] = 1;
+                        break;
+
+                        case SDLK_v:
+                            emu.input[0xF] = 1;
+                        break;
+
+                        case SDLK_KP_ENTER:
+                            if(debugging & emu.active) Fetch();
                         break;
                     }
                 break;
 
                 case SDL_KEYUP:
                     switch(e->key.keysym.sym){
-                        
+
+                        case SDLK_x:
+                            emu.input[0x0] = 0;
+                        break;
+
+                        case SDLK_1:
+                            emu.input[0x1] = 0;
+                        break;
+
+                        case SDLK_2:
+                            emu.input[0x2] = 0;
+                        break;
+
+                        case SDLK_3:
+                            emu.input[0x3] = 0;
+                        break;
+
+                        case SDLK_q:
+                            emu.input[0x4] = 0;
+                        break;
+
+                        case SDLK_w:
+                            emu.input[0x5] = 0;
+                        break;
+
+                        case SDLK_e:
+                            emu.input[0x6] = 0;
+                        break;
+
+                        case SDLK_a:
+                            emu.input[0x7] = 0;
+                        break;
+
+                        case SDLK_s:
+                            emu.input[0x8] = 0;
+                        break;
+
+                        case SDLK_d:
+                            emu.input[0x9] = 0;
+                        break;
+
+                        case SDLK_z:
+                            emu.input[0xA] = 0;
+                        break;
+
+                        case SDLK_c:
+                            emu.input[0xB] = 0;
+                        break;
+
+                        case SDLK_4:
+                            emu.input[0xC] = 0;
+                        break;
+
+                        case SDLK_r:
+                            emu.input[0xD] = 0;
+                        break;
+
+                        case SDLK_f:
+                            emu.input[0xE] = 0;
+                        break;
+
+                        case SDLK_v:
+                            emu.input[0xF] = 0;
+                        break;
                     }
                 break;
 
@@ -148,9 +276,12 @@ int main( int argc, char* args[] )
     //InitChip8(window);
 
     //Hack to get window to stay up
+    float lastTime;
+
     SDL_Event e; 
     bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
     while( quit == FALSE ){ 
+        float deltaTime = SDL_GetTicks64() - lastTime;
         int currentMouse[2];
         SDL_GetMouseState(&currentMouse[0], &currentMouse[1]);
         nk_input_begin(ctx);
@@ -174,7 +305,11 @@ int main( int argc, char* args[] )
         if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 250),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
-        {
+        {   
+            char time[6];
+            gcvt(deltaTime, 6, time);
+            nk_layout_row_dynamic(ctx, 30, 1);
+            nk_label(ctx, time, NK_TEXT_LEFT);
             nk_layout_row_static(ctx, 30, 80, 1);
             if (nk_button_label(ctx, "Open Rom")){
                 InitChip8(window);
@@ -209,7 +344,17 @@ int main( int argc, char* args[] )
          * defaults everything back into a default state.
          * Make sure to either a.) save and restore or b.) reset your own state after
          * rendering the UI. */
-        if (emu.active && !debugging) Fetch();
+        int cyklesPerFrame = 200;
+        for (int c = 0; c < cyklesPerFrame; c++){
+            if (emu.active && !debugging) Fetch();
+            if (emu.active && !debugging) ReBindFrame();
+;
+        }
+        if (emu.active){
+            if(emu.soundTimer > 0) emu.soundTimer -= 60 * deltaTime;
+            if(emu.delayTimer > 0) emu.delayTimer -= 60 * deltaTime;
+        }
+
         DrawFrame(window);
         nk_sdl_render(NK_ANTI_ALIASING_ON, MAX_VERTEX_MEMORY, MAX_ELEMENT_MEMORY);
         EndInput();
@@ -218,6 +363,7 @@ int main( int argc, char* args[] )
 
         oldMouse[0] = currentMouse[0];
         oldMouse[1] = currentMouse[1];
+        lastTime = SDL_GetTicks64();
     }    
     
       //Destroy window

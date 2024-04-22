@@ -57,84 +57,9 @@ void SetFrame(){
     for (int y = 0; y < 32; y++){
         for (int x = 0; x < 64; x++){
             byte pixel = emu.display[y * 64 + x];
-            if (pixel & 0xFF){
-                SetFramePixel(x, y);
-            }
+
+            SetFramePixel(x, y, pixel);
         }
-    }
-    ReBindFrame();
-}
-
-byte Chip8KeyDown(byte key){
-    printf("Inpuzzy\n");
-    switch(key){
-        case 0x0:
-            return GetKeyDown(SDLK_x) | (key << 4);
-        break;
-
-        case 0x1:
-            return GetKeyDown(SDLK_1) | (key << 4);
-        break;
-
-        case 0x2:
-            return GetKeyDown(SDLK_2) | (key << 4);
-        break;
-
-        case 0x3:
-            return GetKeyDown(SDLK_3) | (key << 4);
-        break;
-
-        case 0x4:
-            return GetKeyDown(SDLK_q) | (key << 4);
-        break;
-
-        case 0x5:
-            return GetKeyDown(SDLK_w) | (key << 4);
-        break;
-
-        case 0x6:
-            return GetKeyDown(SDLK_e) | (key << 4);
-        break;
-
-        case 0x7:
-            return GetKeyDown(SDLK_a) | (key << 4);
-        break;
-
-        case 0x8:
-            return GetKeyDown(SDLK_s) | (key << 4);
-        break;
-
-        case 0x9:
-            return GetKeyDown(SDLK_d) | (key << 4);
-        break;
-
-        case 0xA:
-            return GetKeyDown(SDLK_z) | (key << 4);
-        break;
-
-        case 0xB:
-            return GetKeyDown(SDLK_c) | (key << 4);
-        break;
-        
-        case 0xC:
-            return GetKeyDown(SDLK_4) | (key << 4);
-        break;
-
-        case 0xD:
-            return GetKeyDown(SDLK_r) | (key << 4);
-        break;
-
-        case 0xE:
-            return GetKeyDown(SDLK_f) | (key << 4);
-        break;
-
-        case 0xF:
-            return GetKeyDown(SDLK_v) | (key << 4);
-        break;
-
-        default: 
-            return 0x0000;
-        break;
     }
 }
 
@@ -166,17 +91,16 @@ void Fetch(){
 }
 
 void Decode(uint16_t opcode){
-    printf("%#2x\n", (opcode & 0xF000) >> 12);
+    //printf("%#2x\n", (opcode & 0xF000) >> 12);
     switch((opcode & 0xF000) >> 12){
         case 0x00: {
-            printf("opcode: %#4x\n", opcode);
             switch(opcode){
                 case 0x00E0: // CLS:      Clear screen.
                 ClearFrame();
+                for (int i = 0; i < sizeof(emu.display); i++) emu.display[i] = 0;
                 break;
 
                 case 0x00EE: // RET:      Return from subroutine.
-                printf("Return from subroutine %d\n", emu.stackPointer);
                 emu.stackPointer--;
                 emu.PC = emu.stack[emu.stackPointer];
                 break;
@@ -190,7 +114,6 @@ void Decode(uint16_t opcode){
         break;
 
         case 0x02: { // CALL addr:      Call subroutine at addr.
-            printf("PC : %#8x\n", emu.PC);
             emu.stack[emu.stackPointer] = emu.PC;
             ++emu.stackPointer;
             emu.PC = Getnnn(opcode);
@@ -340,10 +263,11 @@ void Decode(uint16_t opcode){
 
                 for (int col = 0; col < 8; col++){
                     byte *pixel = &emu.display[(row + y) * 64 + (col + x)];
-                    if (currentByte & (0x80 >> col)){
-                    *pixel ^= 0xFF;
 
-                        if (*pixel & 0xFF) emu.variableRegister[0x0F] = 1;
+                    if (currentByte & (0x80 >> col)){
+                        if (*pixel) emu.variableRegister[0x0F] = 1;
+
+                        *pixel ^= 0xFF;
                     } 
                 }
             }
@@ -357,12 +281,12 @@ void Decode(uint16_t opcode){
 
             switch(opcode & 0x00FF) {
                 case 0x9E: {
-                    if (Chip8KeyDown(*Vx) & 0x1) emu.PC += 2;
+                    if (emu.input[*Vx]) emu.PC += 2;
                 }
                 break;
 
                 case 0xA1: {
-                    if (!(Chip8KeyDown(*Vx) & 0x1)) emu.PC += 2;
+                    if (emu.input[*Vx] == 0) emu.PC += 2;
                 }
                 break;
             }
@@ -379,15 +303,16 @@ void Decode(uint16_t opcode){
                 break;
 
                 case 0x0A: {
-                    printf("Waiting for input\n");
                     byte val = 0;
                     for (int i = 0; i < 0x10; i++){
-                        val = Chip8KeyDown(i);
-                        if (val & 0x1) break;
+                        if (emu.input[i]) {
+                            val = i;
+                            break;
+                        }
                     }
 
-                    if (!(val & 0x1)) emu.PC -= 2;
-                    else *Vx = (val >> 4);
+                    if (!val) emu.PC -= 2;
+                    else *Vx = val;
                 }
                 break;
 
