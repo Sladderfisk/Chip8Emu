@@ -235,7 +235,7 @@ int main( int argc, char* args[] )
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     //Create window
-    window = SDL_CreateWindow( "EliasMog", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_UTILITY|SDL_WINDOW_RESIZABLE  );
+    window = SDL_CreateWindow( "Emu8", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_UTILITY|SDL_WINDOW_RESIZABLE  );
     if( window == NULL )
     {
         printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
@@ -257,12 +257,6 @@ int main( int argc, char* args[] )
     /* Load Cursor: if you uncomment cursor loading please hide the cursor */
     struct nk_font_atlas *atlas;
     nk_sdl_font_stash_begin(&atlas);
-    /*struct nk_font *droid = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14, 0);*/
-    /*struct nk_font *roboto = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 16, 0);*/
-    /*struct nk_font *future = nk_font_atlas_add_from_file(atlas, "../../../extra_font/kenvector_future_thin.ttf", 13, 0);*/
-    /*struct nk_font *clean = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyClean.ttf", 12, 0);*/
-    /*struct nk_font *tiny = nk_font_atlas_add_from_file(atlas, "../../../extra_font/ProggyTiny.ttf", 10, 0);*/
-    /*struct nk_font *cousine = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Cousine-Regular.ttf", 13, 0);*/
     nk_sdl_font_stash_end();
 
     //Get window surface
